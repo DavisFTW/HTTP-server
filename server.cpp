@@ -3,7 +3,6 @@
 //
 
 #include "server.h"
-
 int server::init() {
 
     if (const auto WSAStartupErr = WSAStartup(this->wVersionRequested, &this->wsaData); WSAStartupErr != 0) {
@@ -63,6 +62,18 @@ int server::start() {
         // received data = ok
         std::string request(bufferRead, bytesRead);
         std::cout << "Received:\n" << request << std::endl;
+
+        // Parse request line
+        size_t firstLineEnd = request.find("\r\n");
+        std::string requestLine = request.substr(0, firstLineEnd);
+
+        std::istringstream iss(requestLine);
+        std::string method, path, version;
+        iss >> method >> path >> version;
+
+        std::cout << "Method: " << method << std::endl;
+        std::cout << "Path: " << path << std::endl;
+        std::cout << "Version: " << version << std::endl;
 
 
         // build response
