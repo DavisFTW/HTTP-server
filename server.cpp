@@ -8,7 +8,7 @@ int server::init() {
 
     if (const auto WSAStartupErr = WSAStartup(this->wVersionRequested, &this->wsaData); WSAStartupErr != 0) {
         std::cout << "WSAStartup failed with error:" << WSAStartupErr << std::endl;
-        return 1;
+        return -1;
     }
 
     this->sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -64,9 +64,19 @@ int server::start() {
         std::string request(bufferRead, bytesRead);
         std::cout << "Received:\n" << request << std::endl;
 
+
+        // build response
+        std::string body = "Hello World!";
+        int bodyLength = body.length();
+
         // send data
         std::cout << "sending data !" << std::endl;
-        std::string response = "HTTP/1.1 200 OK\r\n\r\nHello World!";
+        std::string response = "HTTP/1.1 200 OK\r\n";
+        response += "Content-Type: text/html\r\n";
+        response += "Content-Length: " + std::to_string(bodyLength) + "\r\n";
+        response += "Connection: close\r\n";
+        response += "\r\n";
+        response += body;
         const auto bytesSent = send(clientSocket, response.c_str(), response.length(), 0);
         if (bytesSent == SOCKET_ERROR) {
             std::cout << "send failed" << std::endl;
