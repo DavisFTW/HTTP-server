@@ -73,7 +73,6 @@ int server::start() {
             return -10;
         }
         closesocket(clientSocket);
-        break; // ensures only 1 connection for now
     }
 
     return 0;
