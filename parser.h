@@ -1,0 +1,18 @@
+//
+// Created by Davis on 10/30/2025.
+//
+
+#ifndef UNTITLED_PARSER_H
+#define UNTITLED_PARSER_H
+#include <fstream>
+#include <filesystem>
+#include <iostream>
+namespace fs = std::filesystem;
+
+class parser {
+public:
+    std::string parseFile(std::string requestLine, std::filesystem::path projectPath);
+};
+
+
+#endif //UNTITLED_PARSER_H

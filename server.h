@@ -11,6 +11,8 @@
 #include <fstream>
 #include <filesystem>
 
+#include "parser.h"
+
 class server {
 private:
     const WORD wVersionRequested = MAKEWORD(2, 2);

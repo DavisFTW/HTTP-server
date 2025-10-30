@@ -5,5 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_executable(untitled main.cpp
         server.cpp
-        server.h)
+        server.h
+        parser.cpp
+        parser.h)
 target_link_libraries(untitled ws2_32)
