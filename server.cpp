@@ -85,7 +85,7 @@ int server::start() {
 
         // Build the full path
 
-        fs::path fullPath = fs::path("projects") / this->projecqtPath / pathStr;
+        fs::path fullPath = fs::path("projects") / this->projectPath / pathStr;
 
         std::cout << "Full path: " << fullPath << std::endl;
 
