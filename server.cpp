@@ -4,7 +4,6 @@
 #include <fstream>
 #include <filesystem>
 #include "server.h"
-
 int server::init() {
 
     if (const auto WSAStartupErr = WSAStartup(this->wVersionRequested, &this->wsaData); WSAStartupErr != 0) {
@@ -38,10 +37,11 @@ int server::init() {
 }
 
 int server::start() {
+
     while (true) {
         struct sockaddr_in  connecting_sin{};
         int addr_size = sizeof(connecting_sin);
-       const auto clientSocket =  accept(sock, (struct sockaddr *) &connecting_sin, &addr_size);
+        const auto clientSocket =  accept(sock, reinterpret_cast<struct sockaddr*>(&connecting_sin), &addr_size);
         if (clientSocket == INVALID_SOCKET) {
             std::cout << "accept failed" << std::endl;
             return -1;
@@ -69,28 +69,35 @@ int server::start() {
         size_t firstLineEnd = request.find("\r\n");
         std::string requestLine = request.substr(0, firstLineEnd);
 
+        namespace fs = std::filesystem;
+
         std::istringstream iss(requestLine);
-        std::string method, path, version;
-        iss >> method >> path >> version;
+        std::string method, pathStr, version;
+        iss >> method >> pathStr >> version;
 
-        std::cout << "path: " << path << std::endl;
-        path = path.erase(path.find("/"), 1);
-
-        char *cstr = path.data();
-        std::uintmax_t filesize;
-        try {
-           filesize = std::filesystem::file_size(cstr);
-        } catch (std::exception &err) {
-            std::cout << err.what() << std::endl;
-           // file is not found so what to do ? improve
+        // Remove leading '/'
+        if (!pathStr.empty() && pathStr[0] == '/') {
+            pathStr = pathStr.substr(1);
         }
 
+        // Build the full path
+        fs::path fullPath = fs::path("projects") / "project_name" / pathStr;
 
-        std::ifstream file(path);
+        std::cout << "Full path: " << fullPath << std::endl;
+
+        try {
+            std::uintmax_t filesize = fs::file_size(fullPath);
+            std::cout << "File size: " << filesize << " bytes" << std::endl;
+        } catch (const fs::filesystem_error &err) {
+            std::cout << "Error: " << err.what() << std::endl;
+            // Handle 404
+        }
+
+        std::ifstream file(fullPath);
         std::cout << "opening read file !" << std::endl;
         if (!file.is_open()) {
             std::cout << "file open failed" << std::endl;
-            continue;
+            // #FIXME: this is bad, if no file is found we dont get anything, it should lead to 404
         }
 
 
@@ -105,7 +112,7 @@ int server::start() {
         std::cout << "Total characters: " << contents.length() << std::endl;
 
         std::cout << "Method: " << method << std::endl;
-        std::cout << "Path: " << path << std::endl;
+        std::cout << "Path: " << fullPath << std::endl;
         std::cout << "Version: " << version << std::endl;
 
         // build response
