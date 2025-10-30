@@ -85,8 +85,7 @@ int server::start() {
 
         // Build the full path
 
-        fs::path projectPath = "project_name";
-        fs::path fullPath = fs::path("projects") / projectPath / pathStr;
+        fs::path fullPath = fs::path("projects") / this->projecqtPath / pathStr;
 
         std::cout << "Full path: " << fullPath << std::endl;
 
@@ -102,8 +101,8 @@ int server::start() {
         std::cout << "opening read file !" << std::endl;
         if (!file.is_open()) {
             std::cout << "file open failed" << std::endl;
-            // #FIXME: this is bad, if no file is found we dont get anything, it should lead to 404
-        }
+            // #FIXME: this is bad, if no file is found we dont get anything, what do we do here ?
+
 
 
         std::string contents;
