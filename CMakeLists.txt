@@ -7,5 +7,11 @@ add_executable(untitled main.cpp
         server.cpp
         server.h
         parser.cpp
-        parser.h)
+        parser.h
+        consoleManager.cpp
+        consoleManager.h)
 target_link_libraries(untitled ws2_32)
+
+if(MINGW)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++ -static")
+endif()
