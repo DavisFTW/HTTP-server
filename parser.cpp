@@ -3,6 +3,7 @@
 //
 
 #include "parser.h"
+#include "consoleManager.h"
 
 std::string parser::parseFile(std::string requestLine, std::filesystem::path projectPath) {
 
@@ -19,32 +20,26 @@ std::string parser::parseFile(std::string requestLine, std::filesystem::path pro
 
     fs::path fullPath = fs::path("projects") / projectPath / pathStr;
 
-    std::cout << "Full path: " << fullPath << std::endl;
 
     try {
         std::uintmax_t filesize = fs::file_size(fullPath);
-        std::cout << "File size: " << filesize << " bytes" << std::endl;
     } catch (const fs::filesystem_error &err) {
-        std::cout << "Error: " << err.what() << std::endl;
+        LOG.color(Color::RED)("Error:", err.what());
         // Handle 404
     }
 
     std::ifstream file(fullPath);
-    std::cout << "opening read file !" << std::endl;
     if (!file.is_open()) {
-        std::cout << "file open failed" << std::endl;
+        LOG.color(Color::RED)("File open failed");
         // #FIXME: this is bad, if no file is found we dont get anything, what do we do here ?
     }
-        std::string contents;
-        std::stringstream buffer;
-        buffer << file.rdbuf();
-        contents = buffer.str();
+    std::string contents;
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    contents = buffer.str();
 
-        file.close();
+    file.close();
 
-        std::cout << "File contents:\n" << contents << std::endl;
-        std::cout << "Total characters: " << contents.length() << std::endl;
 
-        return contents;
-    }
-
+    return contents;
+}
