@@ -8,7 +8,8 @@
 #include <iostream>
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include <sstream>
+#include <fstream>
+#include <filesystem>
 
 class server {
 private:
@@ -21,9 +22,11 @@ private:
 
     const int backlog = 5;
 
-
+    std::filesystem::path projectPath;
 
 public:
+
+    server(const std::filesystem::path& projectPath);
     int init();
     int start();
     int cleanup();

@@ -1,9 +1,12 @@
 //
 // Created by Davis on 10/29/2025.
 //
-#include <fstream>
-#include <filesystem>
 #include "server.h"
+
+server::server(const std::filesystem::path& projectPath) {
+    this->projectPath = projectPath;
+}
+
 int server::init() {
 
     if (const auto WSAStartupErr = WSAStartup(this->wVersionRequested, &this->wsaData); WSAStartupErr != 0) {
@@ -81,7 +84,9 @@ int server::start() {
         }
 
         // Build the full path
-        fs::path fullPath = fs::path("projects") / "project_name" / pathStr;
+
+        fs::path projectPath = "project_name";
+        fs::path fullPath = fs::path("projects") / projectPath / pathStr;
 
         std::cout << "Full path: " << fullPath << std::endl;
 
