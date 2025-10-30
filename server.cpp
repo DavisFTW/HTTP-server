@@ -1,8 +1,10 @@
 //
 // Created by Davis on 10/29/2025.
 //
-
+#include <fstream>
+#include <filesystem>
 #include "server.h"
+
 int server::init() {
 
     if (const auto WSAStartupErr = WSAStartup(this->wVersionRequested, &this->wsaData); WSAStartupErr != 0) {
@@ -71,14 +73,43 @@ int server::start() {
         std::string method, path, version;
         iss >> method >> path >> version;
 
+        std::cout << "path: " << path << std::endl;
+        path = path.erase(path.find("/"), 1);
+
+        char *cstr = path.data();
+        std::uintmax_t filesize;
+        try {
+           filesize = std::filesystem::file_size(cstr);
+        } catch (std::exception &err) {
+            std::cout << err.what() << std::endl;
+           // file is not found so what to do ? improve
+        }
+
+
+        std::ifstream file(path);
+        std::cout << "opening read file !" << std::endl;
+        if (!file.is_open()) {
+            std::cout << "file open failed" << std::endl;
+            continue;
+        }
+
+
+        std::string contents;
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+        contents = buffer.str();
+
+        file.close();
+
+        std::cout << "File contents:\n" << contents << std::endl;
+        std::cout << "Total characters: " << contents.length() << std::endl;
+
         std::cout << "Method: " << method << std::endl;
         std::cout << "Path: " << path << std::endl;
         std::cout << "Version: " << version << std::endl;
 
-
         // build response
-        std::string body = "Hello World!";
-        int bodyLength = body.length();
+        int bodyLength = contents.length();
 
         // send data
         std::cout << "sending data !" << std::endl;
@@ -87,7 +118,7 @@ int server::start() {
         response += "Content-Length: " + std::to_string(bodyLength) + "\r\n";
         response += "Connection: close\r\n";
         response += "\r\n";
-        response += body;
+        response += contents;
         const auto bytesSent = send(clientSocket, response.c_str(), response.length(), 0);
         if (bytesSent == SOCKET_ERROR) {
             std::cout << "send failed" << std::endl;
