@@ -31,7 +31,8 @@ std::string parser::parseFile(std::string requestLine, std::filesystem::path pro
     std::ifstream file(fullPath);
     if (!file.is_open()) {
         LOG.color(Color::RED)("File open failed");
-        // #FIXME: this is bad, if no file is found we dont get anything, what do we do here ?
+        // #FIXME: send to server error page, for future this should be logged in a debug/err file somewhere
+
     }
     std::string contents;
     std::stringstream buffer;
@@ -39,7 +40,6 @@ std::string parser::parseFile(std::string requestLine, std::filesystem::path pro
     contents = buffer.str();
 
     file.close();
-
 
     return contents;
 }

@@ -81,12 +81,11 @@ int server::start() {
 
             // send data
             LOG.color(Color::GREEN)("Sending data to browser from server !");
-            std::string response = "HTTP/1.1 200 OK\r\n";
-            response += "Content-Type: text/html\r\n";
-            response += "Content-Length: " + std::to_string(bodyLength) + "\r\n";
-            response += "Connection: close\r\n";
-            response += "\r\n";
+
+            std::string response = this->buildHttpResponse(bodyLength);
             response += contents;
+
+
             const auto bytesSent = send(clientSocket, response.c_str(), response.length(), 0);
             if (bytesSent == SOCKET_ERROR) {
                 LOG.color(Color::RED)("Send failed");
@@ -94,7 +93,6 @@ int server::start() {
             }
             closesocket(clientSocket);
         }
-
         return 0;
 }
 
@@ -110,4 +108,13 @@ int server::cleanup() {
     }
 
     return 0;
+}
+
+std::string server::buildHttpResponse(int bodyLength)  {
+    std::string response = "HTTP/1.1 200 OK\r\n";
+    response += "Content-Type: text/html\r\n";
+    response += "Content-Length: " + std::to_string(bodyLength) + "\r\n";
+    response += "Connection: close\r\n";
+    response += "\r\n";
+    return response;
 }

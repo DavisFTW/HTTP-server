@@ -26,6 +26,8 @@ private:
 
     std::filesystem::path projectPath;
 
+    std::string buildHttpResponse(int bodyLength);
+
 public:
 
     server(const std::filesystem::path& projectPath);
