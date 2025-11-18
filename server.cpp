@@ -9,10 +9,11 @@ server::server(const std::filesystem::path& projectPath) {
 }
 int server::init() {
 
-    if (const auto WSAStartupErr = WSAStartup(this->wVersionRequested, &this->wsaData); WSAStartupErr != 0) {
+    if (auto WSAStartupErr = WSAStartup(this->wVersionRequested, &this->wsaData); WSAStartupErr != 0) {
         LOG.color(Color::RED)("WSAStartup failed with error:", WSAStartupErr);
         return -1;
     }
+
 
     auto raw = socket(AF_INET, SOCK_STREAM, 0);
     this->sock = socketRAII(raw);
@@ -62,7 +63,6 @@ int server::start() {
         }
         else if ( bytesRead == 0 ) {
             LOG.color(Color::YELLOW)("Client disconnected");
-            closesocket(clientSocket.get());
             continue;
         }
 
