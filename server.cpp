@@ -45,15 +45,16 @@ int server::start() {
     while (true) {
         struct sockaddr_in  connecting_sin{};
         int addr_size = sizeof(connecting_sin);
-        const auto clientSocket =  accept(this->sock.get(), reinterpret_cast<struct sockaddr*>(&connecting_sin), &addr_size);
-        if (clientSocket == INVALID_SOCKET) {
+        const auto rawclientSocket =  accept(this->sock.get(), reinterpret_cast<struct sockaddr*>(&connecting_sin), &addr_size);
+        socketRAII clientSocket(rawclientSocket);
+        if (clientSocket.get() == INVALID_SOCKET) {
             LOG.color(Color::RED)("Accept failed");
             return -1;
         }
 
         // receive data
         char bufferRead[4096];
-        const auto bytesRead = recv(clientSocket, bufferRead, 4096, 0);
+        const auto bytesRead = recv(clientSocket.get(), bufferRead, 4096, 0);
         if (bytesRead == SOCKET_ERROR) {
             LOG.color(Color::RED)("Recv failed");
             return -10;
@@ -61,7 +62,7 @@ int server::start() {
         }
         else if ( bytesRead == 0 ) {
             LOG.color(Color::YELLOW)("Client disconnected");
-            closesocket(clientSocket);
+            closesocket(clientSocket.get());
             continue;
         }
 
@@ -87,19 +88,16 @@ int server::start() {
              response += contents;
 
 
-            const auto bytesSent = send(clientSocket, response.c_str(), response.length(), 0);
+            const auto bytesSent = send(clientSocket.get(), response.c_str(), response.length(), 0);
             if (bytesSent == SOCKET_ERROR) {
                 LOG.color(Color::RED)("Send failed");
                 return -10;
             }
-            closesocket(clientSocket);
         }
         return 0;
 }
 
 int server::cleanup() {
-
-    this->sock.release();
     if (WSACleanup() != 0) {
         LOG.color(Color::RED)("WSACleanup failed");
         return -4;
