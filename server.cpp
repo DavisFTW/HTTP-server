@@ -3,17 +3,13 @@
 //
 #include "server.h"
 #include "consoleManager.h"
-
 server::server(const std::filesystem::path& projectPath) {
     this->projectPath = projectPath;
 }
 int server::init() {
-
-    if (auto WSAStartupErr = WSAStartup(this->wVersionRequested, &this->wsaData); WSAStartupErr != 0) {
-        LOG.color(Color::RED)("WSAStartup failed with error:", WSAStartupErr);
+    if (!this->wsa.getWSAStatus()) {
         return -1;
     }
-
 
     auto raw = socket(AF_INET, SOCK_STREAM, 0);
     this->sock = socketRAII(raw);
@@ -97,14 +93,6 @@ int server::start() {
         return 0;
 }
 
-int server::cleanup() {
-    if (WSACleanup() != 0) {
-        LOG.color(Color::RED)("WSACleanup failed");
-        return -4;
-    }
-
-    return 0;
-}
 
 std::string server::buildHttpResponse(int bodyLength)  {
     std::string response = "HTTP/1.1 200 OK\r\n";

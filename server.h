@@ -10,7 +10,6 @@
     #include <ws2tcpip.h>
     #include <fstream>
     #include <filesystem>
-
     #include "parser.h"
 
     class socketRAII {
@@ -56,15 +55,28 @@
     };
 
 
+class wsaRAII {
+private:
+    int errCode;
+    const WORD wVersionRequested = MAKEWORD(2, 2);
+    WSADATA wsaData;
+    bool wsaStatus = false;
+
+public:
+    wsaRAII();
+    ~wsaRAII();
+
+    bool getWSAStatus() const { return wsaStatus; };
+};
+
+
     class server {
     private:
-        const WORD wVersionRequested = MAKEWORD(2, 2);
-
         const int port = 5051;
-        WSADATA wsaData;
+
         socketRAII sock;
         struct sockaddr_in  local_sin{};
-
+        wsaRAII wsa;
         const int backlog = 5;
 
         std::filesystem::path projectPath;
@@ -76,7 +88,6 @@
         server(const std::filesystem::path& projectPath);
         int init();
         int start();
-        int cleanup();
 
     };
     #endif //UNTITLED_SERVER_H
