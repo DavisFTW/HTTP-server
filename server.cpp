@@ -7,7 +7,6 @@
 server::server(const std::filesystem::path& projectPath) {
     this->projectPath = projectPath;
 }
-
 int server::init() {
 
     if (const auto WSAStartupErr = WSAStartup(this->wVersionRequested, &this->wsaData); WSAStartupErr != 0) {
@@ -15,8 +14,10 @@ int server::init() {
         return -1;
     }
 
-    this->sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (this->sock == INVALID_SOCKET) {
+    auto raw = socket(AF_INET, SOCK_STREAM, 0);
+    this->sock = socketRAII(raw);
+
+    if (this->sock.get() == INVALID_SOCKET) {
         LOG.color(Color::RED)("Socket creation failed");
         return -1;
     }
@@ -24,7 +25,7 @@ int server::init() {
     this->local_sin.sin_family = AF_INET;
     this->local_sin.sin_port = htons (this->port);
     this->local_sin.sin_addr.s_addr = htonl (INADDR_ANY);
-    const auto bindErr = bind(sock, reinterpret_cast<struct sockaddr * >(&local_sin), sizeof(local_sin));
+    const auto bindErr = bind(this->sock.get(), reinterpret_cast<struct sockaddr * >(&local_sin), sizeof(local_sin));
 
     if (bindErr == SOCKET_ERROR) {
         const auto errCOde = WSAGetLastError();
@@ -32,7 +33,7 @@ int server::init() {
         return -2;
     }
 
-    const auto listenErrr = listen(sock, this->backlog);
+    const auto listenErrr = listen(this->sock.get(), this->backlog);
     if (listenErrr == SOCKET_ERROR) {
         LOG.color(Color::RED)("Listen failed with error", listenErrr);
         return -3;
@@ -44,7 +45,7 @@ int server::start() {
     while (true) {
         struct sockaddr_in  connecting_sin{};
         int addr_size = sizeof(connecting_sin);
-        const auto clientSocket =  accept(sock, reinterpret_cast<struct sockaddr*>(&connecting_sin), &addr_size);
+        const auto clientSocket =  accept(this->sock.get(), reinterpret_cast<struct sockaddr*>(&connecting_sin), &addr_size);
         if (clientSocket == INVALID_SOCKET) {
             LOG.color(Color::RED)("Accept failed");
             return -1;
@@ -83,7 +84,7 @@ int server::start() {
             LOG.color(Color::GREEN)("Sending data to browser from server !");
 
             std::string response = this->buildHttpResponse(bodyLength);
-            response += contents;
+             response += contents;
 
 
             const auto bytesSent = send(clientSocket, response.c_str(), response.length(), 0);
@@ -97,11 +98,8 @@ int server::start() {
 }
 
 int server::cleanup() {
-    if (closesocket(this->sock) == SOCKET_ERROR) {
-        LOG.color(Color::RED)("Closesocket failed");
-        return -6;
-    }
 
+    this->sock.release();
     if (WSACleanup() != 0) {
         LOG.color(Color::RED)("WSACleanup failed");
         return -4;

@@ -9,7 +9,8 @@ add_executable(untitled main.cpp
         parser.cpp
         parser.h
         consoleManager.cpp
-        consoleManager.h)
+        consoleManager.h
+        socketraii.cpp)
 target_link_libraries(untitled ws2_32)
 
 if(MINGW)
