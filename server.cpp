@@ -46,7 +46,7 @@ int server::start() {
         socketRAII clientSocket(rawclientSocket);
         if (clientSocket.get() == INVALID_SOCKET) {
             LOG.color(Color::RED)("Accept failed");
-            return -1;
+            continue;
         }
 
         // receive data

@@ -72,11 +72,14 @@ public:
 
     class server {
     private:
-        const int port = 5051;
 
-        socketRAII sock;
-        struct sockaddr_in  local_sin{};
+        // init classes
         wsaRAII wsa;
+        socketRAII sock; // always init after wsa as socket is depentdant on this
+
+        const int port = 5051;
+        struct sockaddr_in  local_sin{};
+
         const int backlog = 5;
 
         std::filesystem::path projectPath;
