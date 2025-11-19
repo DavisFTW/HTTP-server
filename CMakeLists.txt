@@ -11,7 +11,9 @@ add_executable(untitled main.cpp
         consoleManager.cpp
         consoleManager.h
         socketraii.cpp
-        wsaRAII.cpp)
+        wsaRAII.cpp
+        serverDataLogger.cpp
+        serverDataLogger.h)
 target_link_libraries(untitled ws2_32)
 
 if(MINGW)
