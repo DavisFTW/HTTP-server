@@ -80,8 +80,9 @@ int server::start() {
 
             // is client ready
             if (FD_ISSET(clientSock, &copySet)) {
-                char bufferRead[4096];
-                const auto bytesRead = recv(clientRAII.get(), bufferRead, 4096, 0);
+                const int bufferSize = 4096;
+                char bufferRead[bufferSize];
+                const auto bytesRead = recv(clientRAII.get(), bufferRead, bufferSize, 0);
 
                 if (bytesRead <= 0) {
                     // Client disconnected
@@ -120,7 +121,7 @@ int server::start() {
                 continue;
             }
 
-            ++it;  // client not ready
+            ++it;
         }
     }
     return 0;
