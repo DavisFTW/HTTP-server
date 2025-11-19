@@ -7,6 +7,10 @@
 
 
 class serverDataLogger {
+private:
+   // struct sockaddr_in connecting_sin{};
+public:
+
 };
 
 

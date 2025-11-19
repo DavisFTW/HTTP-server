@@ -2,17 +2,17 @@
     // Created by Davis on 10/29/2025.
     //
 
-    #ifndef UNTITLED_SERVER_H
-    #define UNTITLED_SERVER_H
+#ifndef UNTITLED_SERVER_H
+#define UNTITLED_SERVER_H
 
-    #include <iostream>
-    #include <winsock2.h>
-    #include <ws2tcpip.h>
-    #include <fstream>
-    #include <filesystem>
-    #include "parser.h"
-
-    class socketRAII {
+#include <iostream>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <fstream>
+#include <filesystem>
+#include "parser.h"
+#include <map>
+class socketRAII {
     private:
         SOCKET sock;
     public:
@@ -70,27 +70,27 @@ public:
 };
 
 
-    class server {
-    private:
+class server {
+private:
 
-        // init classes
-        wsaRAII wsa;
-        socketRAII sock; // always init after wsa as socket is depentdant on this
+    //async
+    fd_set master_set;  // TODO: This will hold ALL sockets we're watching
+    SOCKET max_fd;      // TODO: Track the highest socket number for select()
+    std::map<SOCKET, socketRAII> clients;  // TODO: Map socket number → RAII wrapper
+    // init classes
+    wsaRAII wsa;
+    socketRAII sock; // always init after wsa as socket is depentdant on this
 
-        const int port = 5051;
-        struct sockaddr_in  local_sin{};
+    const int port = 5051;
+    struct sockaddr_in  local_sin{};
+    const int backlog = 5;
+    std::filesystem::path projectPath;
+    std::string buildHttpResponse(int bodyLength);
 
-        const int backlog = 5;
+public:
+    server(const std::filesystem::path& projectPath);
+    int init();
+    int start();
 
-        std::filesystem::path projectPath;
-
-        std::string buildHttpResponse(int bodyLength);
-
-    public:
-
-        server(const std::filesystem::path& projectPath);
-        int init();
-        int start();
-
-    };
-    #endif //UNTITLED_SERVER_H
+};
+#endif //UNTITLED_SERVER_H

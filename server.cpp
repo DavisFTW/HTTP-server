@@ -39,60 +39,92 @@ int server::init() {
 }
 
 int server::start() {
+    FD_ZERO(&this->master_set);
+    FD_SET(this->sock.get(), &this->master_set);
+    this->max_fd = this->sock.get();
+
     while (true) {
-        struct sockaddr_in  connecting_sin{};
-        int addr_size = sizeof(connecting_sin);
-        const auto rawclientSocket =  accept(this->sock.get(), reinterpret_cast<struct sockaddr*>(&connecting_sin), &addr_size);
-        socketRAII clientSocket(rawclientSocket);
-        if (clientSocket.get() == INVALID_SOCKET) {
-            LOG.color(Color::RED)("Accept failed");
-            continue;
+        fd_set copySet = this->master_set;
+        int activity = select(max_fd + 1, &copySet, NULL, NULL, NULL);
+
+        if (activity == SOCKET_ERROR) {
+            const auto err = WSAGetLastError();
+            LOG.color(Color::RED)("Select failed", err, "error code");
+            return -1;
         }
 
-        // receive data
-        char bufferRead[4096];
-        const auto bytesRead = recv(clientSocket.get(), bufferRead, 4096, 0);
-        if (bytesRead == SOCKET_ERROR) {
-            LOG.color(Color::RED)("Recv failed");
-            return -10;
+        if (FD_ISSET(this->sock.get(), &copySet)) {
+            struct sockaddr_in connecting_sin{};
+            int addr_size = sizeof(connecting_sin);
 
-        }
-        else if ( bytesRead == 0 ) {
-            LOG.color(Color::YELLOW)("Client disconnected");
-            continue;
-        }
+            const auto rawclientSocket = accept(
+                this->sock.get(),
+                reinterpret_cast<struct sockaddr*>(&connecting_sin),
+                &addr_size);
 
-        // received data = ok send this data to parser, recive back content
-        std::string request(bufferRead, bytesRead);
+            if (rawclientSocket != INVALID_SOCKET) {
+                FD_SET(rawclientSocket, &this->master_set);
 
-        // Parse request line
-        size_t firstLineEnd = request.find("\r\n");
-        std::string requestLine = request.substr(0, firstLineEnd);
-
-
-        parser parserInstance;
-
-        const auto contents = parserInstance.parseFile(requestLine, this->projectPath);
-
-            // build response
-            int bodyLength = contents.length();
-
-            // send data
-            LOG.color(Color::GREEN)("Sending data to browser from server !");
-
-            std::string response = this->buildHttpResponse(bodyLength);
-             response += contents;
-
-
-            const auto bytesSent = send(clientSocket.get(), response.c_str(), response.length(), 0);
-            if (bytesSent == SOCKET_ERROR) {
-                LOG.color(Color::RED)("Send failed");
-                return -10;
+                if (rawclientSocket > this->max_fd) {
+                    this->max_fd = rawclientSocket;
+                }
+                this->clients.emplace(rawclientSocket, socketRAII(rawclientSocket));
+                LOG.color(Color::GREEN)("New client connected, socket:", rawclientSocket);
             }
         }
-        return 0;
-}
 
+        // iterate existing clients
+        for (auto it = clients.begin(); it != clients.end(); ) {
+            SOCKET clientSock = it->first;
+            socketRAII& clientRAII = it->second;
+
+            // is client ready
+            if (FD_ISSET(clientSock, &copySet)) {
+                char bufferRead[4096];
+                const auto bytesRead = recv(clientRAII.get(), bufferRead, 4096, 0);
+
+                if (bytesRead <= 0) {
+                    // Client disconnected
+                    LOG.color(Color::YELLOW)("Client disconnected, socket:", clientSock);
+                    FD_CLR(clientSock, &this->master_set);
+                    it = clients.erase(it);
+                    continue;
+                }
+
+                // Process request
+                std::string request(bufferRead, bytesRead);
+                size_t firstLineEnd = request.find("\r\n");
+                std::string requestLine = request.substr(0, firstLineEnd);
+
+                parser parserInstance;
+                const auto contents = parserInstance.parseFile(requestLine, this->projectPath);
+
+                int bodyLength = contents.length();
+                LOG.color(Color::GREEN)("Sending data to browser from server!");
+
+                std::string response = this->buildHttpResponse(bodyLength);
+                response += contents;
+
+                const auto bytesSent = send(clientRAII.get(),
+                                           response.c_str(),
+                                           response.length(),
+                                           0);
+
+                if (bytesSent == SOCKET_ERROR) {
+                    LOG.color(Color::RED)("Send failed");
+                }
+
+                // Close connection after response http1.0 style
+                FD_CLR(clientSock, &this->master_set);
+                it = clients.erase(it);
+                continue;
+            }
+
+            ++it;  // client not ready
+        }
+    }
+    return 0;
+}
 
 std::string server::buildHttpResponse(int bodyLength)  {
     std::string response = "HTTP/1.1 200 OK\r\n";
