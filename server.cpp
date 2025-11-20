@@ -14,6 +14,13 @@ int server::init() {
     auto raw = socket(AF_INET, SOCK_STREAM, 0);
     this->sock = socketRAII(raw);
 
+    u_long iMode = 1;
+    const auto ioctlResult = ioctlsocket(this->sock.get(), FIONBIO, &iMode);
+
+    if (ioctlResult != NO_ERROR) {
+        LOG.color(Color::RED)("ioctl failed with error =>", ioctlResult);  //WHY DO WE BLOCK CLAUDE ?
+    }
+
     if (this->sock.get() == INVALID_SOCKET) {
         LOG.color(Color::RED)("Socket creation failed");
         return -1;
@@ -61,6 +68,15 @@ int server::start() {
                 this->sock.get(),
                 reinterpret_cast<struct sockaddr*>(&connecting_sin),
                 &addr_size);
+
+
+            u_long iMode = 1;
+            const auto ioctlResult = ioctlsocket(this->sock.get(), FIONBIO, &iMode);
+
+            if (ioctlResult != NO_ERROR) {
+                LOG.color(Color::RED)("ioctl failed with error =>", ioctlResult);  //WHY DO WE BLOCK CLAUDE ?
+            }
+
 
             if (rawclientSocket != INVALID_SOCKET) {
                 FD_SET(rawclientSocket, &this->master_set);
