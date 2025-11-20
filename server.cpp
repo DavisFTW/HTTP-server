@@ -57,7 +57,8 @@ int server::start() {
         if (activity == SOCKET_ERROR) {
             const auto err = WSAGetLastError();
             LOG.color(Color::RED)("Select failed", err, "error code");
-            return -1;
+            //return -1; // #FIXME: we should not blidnly just continue on activity error, check select() and WSAGetLastError there should be err handlind here ?
+            continue;
         }
 
         if (FD_ISSET(this->sock.get(), &copySet)) {
@@ -74,7 +75,7 @@ int server::start() {
             const auto ioctlResult = ioctlsocket(this->sock.get(), FIONBIO, &iMode);
 
             if (ioctlResult != NO_ERROR) {
-                LOG.color(Color::RED)("ioctl failed with error =>", ioctlResult);  //WHY DO WE BLOCK CLAUDE ?
+                LOG.color(Color::RED)("ioctl ( Client ) failed with error =>", ioctlResult);
             }
 
 
@@ -84,6 +85,7 @@ int server::start() {
                 if (rawclientSocket > this->max_fd) {
                     this->max_fd = rawclientSocket;
                 }
+
                 this->clients.emplace(rawclientSocket, socketRAII(rawclientSocket));
                 LOG.color(Color::GREEN)("New client connected, socket:", rawclientSocket);
             }
@@ -98,7 +100,18 @@ int server::start() {
             if (FD_ISSET(clientSock, &copySet)) {
                 const int bufferSize = 4096;
                 char bufferRead[bufferSize];
+
                 const auto bytesRead = recv(clientRAII.get(), bufferRead, bufferSize, 0);
+
+                if (bytesRead == SOCKET_ERROR) {
+                    LOG.color(Color::RED)("recv failed with SOCKET_ERROR");
+                    const int err = WSAGetLastError();
+                    if (err == WSAEWOULDBLOCK) {
+                        ++it; // skip client, goto next
+                        continue;
+                    }
+
+                }
 
                 if (bytesRead <= 0) {
                     // Client disconnected
