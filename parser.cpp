@@ -20,7 +20,6 @@ std::string parser::parseFile(std::string requestLine, std::filesystem::path pro
 
     fs::path fullPath = fs::path("projects") / projectPath / pathStr;
 
-
     try {
         std::uintmax_t filesize = fs::file_size(fullPath);
     } catch (const fs::filesystem_error &err) {
@@ -42,4 +41,11 @@ std::string parser::parseFile(std::string requestLine, std::filesystem::path pro
     file.close();
 
     return contents;
+}
+
+std::string parser::getFileType(const fs::path& fullPath) {
+    const auto fileType = fullPath.extension().string();
+    if (fileType == ".html" || fileType == ".htm") return "text/html";
+    if (fileType == ".css") return "text/css";
+    if (fileType == ".js") return "application/javascript";
 }

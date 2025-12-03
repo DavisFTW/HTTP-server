@@ -65,14 +65,15 @@ int server::start() {
             struct sockaddr_in connecting_sin{};
             int addr_size = sizeof(connecting_sin);
 
+
+            //#we just raw it until we emplace so what the hell
             const auto rawclientSocket = accept(
                 this->sock.get(),
                 reinterpret_cast<struct sockaddr*>(&connecting_sin),
                 &addr_size);
 
-
             u_long iMode = 1;
-            const auto ioctlResult = ioctlsocket(this->sock.get(), FIONBIO, &iMode);
+            const auto ioctlResult = ioctlsocket(rawclientSocket,FIONBIO, &iMode);
 
             if (ioctlResult != NO_ERROR) {
                 LOG.color(Color::RED)("ioctl ( Client ) failed with error =>", ioctlResult);

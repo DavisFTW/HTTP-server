@@ -12,6 +12,7 @@ namespace fs = std::filesystem;
 class parser {
 public:
     std::string parseFile(std::string requestLine, std::filesystem::path projectPath);
+    std::string getFileType(const fs::path& fullPath);
 };
 
 
