@@ -13,7 +13,8 @@ add_executable(untitled main.cpp
         socketraii.cpp
         wsaRAII.cpp
         serverDataLogger.cpp
-        serverDataLogger.h)
+        serverDataLogger.h
+        HttpStatusCodes.h)
 target_link_libraries(untitled ws2_32)
 
 if(MINGW)

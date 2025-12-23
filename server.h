@@ -11,6 +11,7 @@
 #include <fstream>
 #include <filesystem>
 #include "parser.h"
+#include "serverDataLogger.h"
 #include <map>
 class socketRAII {
     private:
@@ -85,7 +86,9 @@ private:
     struct sockaddr_in  local_sin{};
     const int backlog = 5;
     std::filesystem::path projectPath;
-    std::string buildHttpResponse(int bodyLength);
+    std::string buildHttpResponse(int bodyLength, int statusCode, std::string& mime );
+
+    char* get_ip_str(const struct sockaddr *sa, char *s, size_t maxlen);
 public:
     server(const std::filesystem::path& projectPath);
     int init();

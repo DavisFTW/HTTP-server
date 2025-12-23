@@ -3,3 +3,12 @@
 //
 
 #include "serverDataLogger.h"
+
+void serverDataLogger::startTimer() {
+
+}
+
+void serverDataLogger::stopTimer() {
+
+
+}
